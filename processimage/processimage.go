@@ -51,15 +51,44 @@ const rootTemplateHTML = `
 Background File: <input type="file" name="background"><br>
 Depth File: <input type="file" name="depth"><br>
 Cross-eyed: <input type="checkbox" name="crossEyed"><br>
-Separation Min: <input type="textbox" name="separationMin" value="100"><br>
-Separation Max: <input type="textbox" name="separationMax" value="160"><br>
+Invert depth: <input type="checkbox" name="invertDepth"><br>
+Separation Min: <input type="textbox" name="separationMin" value=""><br>
+Separation Max: <input type="textbox" name="separationMax" value=""><br>
 <input type="submit" name="submit" value="Submit">
 </form>
 </body></html>
 `
 
+// Upload two images and return a PNG autostereogram.
+//
+// "background" image contains a PNG/GIF/JPEG full of color and contrast.
+// "depth" image contains a PNG/GIF/JPEG greyscale depth map.
+//     White describes "high" points and black describes "low" points.
+// "crossEyed" bool determines whether to optimize for cross-eyed viewing.
+// "separationMin" int the minimum eye separation distance.
+// "separationMax" int the maximum eye separation distance.
+//
+// returns a PNG image.
 func upload(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(500000)
+	bg := parseFirstImage("background", r)
+	dm := parseFirstImage("depth", r)
+
+	var config imagic.Config
+	width := dm.Bounds().Max.X - dm.Bounds().Min.X
+	config = imagic.Config{width / 14, width / 10, false, false}
+
+	config = updateConfig(&config, r)
+
+	outputImage := imagic.Imagic(dm, bg, config)
+	err := png.Encode(w, outputImage)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Grab the first image from the multipart form that matches the supplied name.
+func parseFirstImage(name string, r *http.Request) image.Image {
+	err := r.ParseMultipartForm(10000000) // 10^7 bytes (10MB)  max payload
 	if err != nil {
 		panic(err)
 	}
@@ -72,66 +101,55 @@ func upload(w http.ResponseWriter, r *http.Request) {
 		panic("File not found in multipart form")
 	}
 
-	backgrounds := f["background"]
-	if len(backgrounds) == 0 {
-		panic("Background not found")
+	images := f[name]
+	if len(images) == 0 {
+		panic("Image not found")
 	}
-	background := backgrounds[0]
-	reader, err := background.Open()
+	reader, err := images[0].Open()
 	if err != nil {
-		panic("Background could not be read")
+		panic("Image could not be read")
 	}
 	bg, _, err := image.Decode(reader)
 	if err != nil {
 		panic("Background image could not be decoded")
 	}
+	return bg
+}
 
-	depths := f["depth"]
-	if len(depths) == 0 {
-		panic("Depth map not found")
-	}
-	depth := depths[0]
-	reader, err = depth.Open()
+// Update configuration based on URL parameters.
+func updateConfig(config *imagic.Config, r *http.Request) imagic.Config {
+	err := r.ParseForm()
 	if err != nil {
-		panic("Depth map could not be read")
+		panic("Cannot parse form for parameters")
 	}
-	dm, _, err := image.Decode(reader)
-	if err != nil {
-		panic("Depth map image could not be decoded")
-	}
-
-	var config imagic.Config
-	config = imagic.Config{60, 100, true}
-
-	err = r.ParseForm() // Ignore error and use defaults.
-	if err == nil {
-		var vs []string
-		vs = r.Form["separationMin"]
-		if len(vs) > 0 {
-			i, err := strconv.ParseInt(vs[0], 0, 0)
-			if err == nil {
-				config.SeparationMin = int(i)
-			}
-		}
-		vs = r.Form["separationMax"]
-		if len(vs) > 0 {
-			i, err := strconv.ParseInt(vs[0], 0, 0)
-			if err == nil {
-				config.SeparationMax = int(i)
-			}
-		}
-		vs = r.Form["crossEyed"]
-		if len(vs) > 0 {
-			b, err := strconv.ParseBool(vs[0])
-			if err == nil {
-				config.CrossEyed = b
-			}
+	var vs []string
+	vs = r.Form["separationMin"]
+	if len(vs) > 0 {
+		i, err := strconv.ParseInt(vs[0], 0, 0)
+		if err == nil && i > 0 {
+			config.SeparationMin = int(i)
 		}
 	}
-
-	outputImage := imagic.Imagic(dm, bg, config)
-	err = png.Encode(w, outputImage)
-	if err != nil {
-		panic(err)
+	vs = r.Form["separationMax"]
+	if len(vs) > 0 {
+		i, err := strconv.ParseInt(vs[0], 0, 0)
+		if err == nil && i > 0 {
+			config.SeparationMax = int(i)
+		}
 	}
+	vs = r.Form["crossEyed"]
+	if len(vs) > 0 {
+		s := vs[0]
+		if len(s) > 0 {
+			config.CrossEyed = true
+		}
+	}
+	vs = r.Form["invertDepth"]
+	if len(vs) > 0 {
+		s := vs[0]
+		if len(s) > 0 {
+			config.InvertDepth = true
+		}
+	}
+	return *config
 }
