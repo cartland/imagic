@@ -70,6 +70,7 @@ Separation Max: <input type="textbox" name="separationMax" value=""><br>
 //
 // returns a PNG image.
 func upload(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "image/png")
 	bg := parseFirstImage("background", r)
 	dm := parseFirstImage("depth", r)
 
