@@ -22,6 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
+  "github.com/mjibson/appstats"
 	"github.com/cartland/go/imagic"
 	"image"
 	_ "image/gif"
@@ -30,12 +31,11 @@ import (
 )
 
 func init() {
-	http.HandleFunc("/", handler)
-	http.HandleFunc("/generate", generate)
+	http.Handle("/", appstats.NewHandler(handler))
+	http.Handle("/generate", appstats.NewHandler(generate))
 }
 
-func handler(w http.ResponseWriter, r *http.Request) {
-	c := appengine.NewContext(r)
+func handler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	generateURL := "/generate"
 	w.Header().Set("Content-Type", "text/html")
 	err := rootTemplate.Execute(w, generateURL)
@@ -70,7 +70,7 @@ Separation Max: <input type="textbox" name="separationMax" value=""><br>
 // "separationMax" int the maximum eye separation distance.
 //
 // returns a PNG image.
-func generate(w http.ResponseWriter, r *http.Request) {
+func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
 	bgc := make(chan image.Image)
 	dmc := make(chan image.Image)
