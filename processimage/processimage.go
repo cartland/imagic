@@ -17,6 +17,7 @@ package processimage
 
 import (
 	"appengine"
+	"appengine/urlfetch"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -30,14 +31,14 @@ import (
 
 func init() {
 	http.HandleFunc("/", handler)
-	http.HandleFunc("/uploads", upload)
+	http.HandleFunc("/generate", generate)
 }
 
 func handler(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
-	uploadURL := "/uploads"
+	generateURL := "/generate"
 	w.Header().Set("Content-Type", "text/html")
-	err := rootTemplate.Execute(w, uploadURL)
+	err := rootTemplate.Execute(w, generateURL)
 	if err != nil {
 		c.Errorf("%v", err)
 	}
@@ -47,14 +48,14 @@ var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
 
 const rootTemplateHTML = `
 <html><head><title>Imagic Autostereogram Generator</title></head><body>
-<form action="{{.}}" method="POST" enctype="multipart/form-data">
-Background File: <input type="file" name="background"><br>
-Depth File: <input type="file" name="depth"><br>
+<form action="{{.}}" method="GET" enctype="multipart/form-data">
+Background URL: <input type="textbox" name="background"><br>
+Depth URL: <input type="textbox" name="depth"><br>
 Cross-eyed: <input type="checkbox" name="crossEyed"><br>
 Invert depth: <input type="checkbox" name="invertDepth"><br>
 Separation Min: <input type="textbox" name="separationMin" value=""><br>
 Separation Max: <input type="textbox" name="separationMax" value=""><br>
-<input type="submit" name="submit" value="Submit">
+<input type="submit" name="submit" value="Generate">
 </form>
 </body></html>
 `
@@ -69,10 +70,10 @@ Separation Max: <input type="textbox" name="separationMax" value=""><br>
 // "separationMax" int the maximum eye separation distance.
 //
 // returns a PNG image.
-func upload(w http.ResponseWriter, r *http.Request) {
+func generate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
-	bg := parseFirstImage("background", r)
-	dm := parseFirstImage("depth", r)
+	bg, err := getImage("background", r)
+	dm, err := getImage("depth", r)
 
 	var config imagic.Config
 	width := dm.Bounds().Max.X - dm.Bounds().Min.X
@@ -81,40 +82,73 @@ func upload(w http.ResponseWriter, r *http.Request) {
 	config = updateConfig(&config, r)
 
 	outputImage := imagic.Imagic(dm, bg, config)
-	err := png.Encode(w, outputImage)
+	err = png.Encode(w, outputImage)
 	if err != nil {
 		panic(err)
 	}
 }
 
+func getImage(name string, r *http.Request) (image.Image, error) {
+	img, err := parseFirstImage(name, r)
+	if err != nil {
+		img, err := lookupImage(name, r)
+		return img, err
+	}
+	return img, err
+}
+
 // Grab the first image from the multipart form that matches the supplied name.
-func parseFirstImage(name string, r *http.Request) image.Image {
+func parseFirstImage(name string, r *http.Request) (image.Image, error) {
 	err := r.ParseMultipartForm(10000000) // 10^7 bytes (10MB)  max payload
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	mf := r.MultipartForm
 	if mf == nil {
-		panic("Could not read multipart form")
+		return nil, appError{"Could not read multipart form"}
 	}
 	f := mf.File
 	if f == nil {
-		panic("File not found in multipart form")
+		return nil, appError{"File not found in multipart form"}
 	}
 
 	images := f[name]
 	if len(images) == 0 {
-		panic("Image not found")
+		return nil, appError{"Image not found"}
 	}
 	reader, err := images[0].Open()
 	if err != nil {
-		panic("Image could not be read")
+		return nil, appError{"Image could not be read"}
 	}
-	bg, _, err := image.Decode(reader)
+	im, _, err := image.Decode(reader)
 	if err != nil {
-		panic("Background image could not be decoded")
+		return nil, err
 	}
-	return bg
+	return im, nil
+}
+
+func lookupImage(name string, r *http.Request) (image.Image, error) {
+	err := r.ParseForm()
+	if err != nil {
+		return nil, err
+	}
+	var vs []string
+	vs = r.Form[name]
+	for i := range vs {
+		s := vs[i]
+		c := appengine.NewContext(r)
+		client := urlfetch.Client(c)
+		resp, err := client.Get(s)
+		if err != nil {
+			return nil, appError{"Could not fetch URL"}
+		}
+		reader := resp.Body
+		im, _, err := image.Decode(reader)
+		if err == nil {
+			return im, nil
+		}
+	}
+	return nil, appError{"Could not find image URL"}
 }
 
 // Update configuration based on URL parameters.
@@ -153,4 +187,12 @@ func updateConfig(config *imagic.Config, r *http.Request) imagic.Config {
 		}
 	}
 	return *config
+}
+
+type appError struct {
+	err string
+}
+
+func (e appError) Error() string {
+	return e.err
 }
