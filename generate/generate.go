@@ -72,8 +72,33 @@ Separation Max: <input type="textbox" name="separationMax" value=""><br>
 // returns a PNG image.
 func generate(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "image/png")
-	bg, err := getImage("background", r)
-	dm, err := getImage("depth", r)
+	bgc := make(chan image.Image)
+	dmc := make(chan image.Image)
+
+	go func() {
+		bg, err := getImage("background", r)
+		if err != nil {
+			bgc <- nil
+		}
+		bgc <- bg
+	}()
+	go func() {
+		dm, err := getImage("depth", r)
+		if err != nil {
+			dmc <- nil
+		}
+		dmc <- dm
+	}()
+
+	dm := <-dmc
+	bg := <-bgc
+
+  if dm == nil {
+    http.Error(w, "No depth map found", http.StatusNotFound)
+  }
+  if bg == nil {
+    http.Error(w, "No background image found", http.StatusNotFound)
+  }
 
 	var config imagic.Config
 	width := dm.Bounds().Max.X - dm.Bounds().Min.X
@@ -82,7 +107,7 @@ func generate(w http.ResponseWriter, r *http.Request) {
 	config = updateConfig(&config, r)
 
 	outputImage := imagic.Imagic(dm, bg, config)
-	err = png.Encode(w, outputImage)
+  err := png.Encode(w, outputImage)
 	if err != nil {
 		panic(err)
 	}
