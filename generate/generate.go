@@ -49,10 +49,10 @@ var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
 const rootTemplateHTML = `
 <html><head><title>Imagic Autostereogram Generator</title></head><body>
 <form action="{{.}}" method="GET" enctype="multipart/form-data">
-Background URL: <input type="textbox" name="background"><br>
-Depth URL: <input type="textbox" name="depth"><br>
-Cross-eyed: <input type="checkbox" name="crossEyed"><br>
+Background URL: <input type="textbox" name="background" value="http://www.chriscartland.com/static/Chefchaouen.jpg"><br>
+Depth URL: <input type="textbox" name="depth" value="http://www.imsc.res.in/~kapil/geometry/borr/borrodepth.png"><br>
 Invert depth: <input type="checkbox" name="invertDepth"><br>
+Cross-eyed: <input type="checkbox" name="crossEyed"><br>
 Separation Min: <input type="textbox" name="separationMin" value=""><br>
 Separation Max: <input type="textbox" name="separationMax" value=""><br>
 <input type="submit" name="submit" value="Generate">
