@@ -1,5 +1,5 @@
 application: imagic-golang
-version: 2
+version: 3
 runtime: go
 api_version: go1
 
