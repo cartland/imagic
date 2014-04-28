@@ -46,7 +46,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 var rootTemplate = template.Must(template.New("root").Parse(rootTemplateHTML))
 
 const rootTemplateHTML = `
-<html><body>
+<html><head><title>Imagic Autostereogram Generator</title></head><body>
 <form action="{{.}}" method="POST" enctype="multipart/form-data">
 Background File: <input type="file" name="background"><br>
 Depth File: <input type="file" name="depth"><br>
