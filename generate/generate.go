@@ -17,10 +17,13 @@ package processimage
 
 import (
 	"appengine"
+	"appengine/memcache"
 	"appengine/urlfetch"
+	"bytes"
 	"html/template"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/cartland/go/imagic"
 	"github.com/mjibson/appstats"
@@ -161,12 +164,48 @@ func lookupImage(c appengine.Context, name string, r *http.Request) (image.Image
 	vs = r.Form[name]
 	for i := range vs {
 		s := vs[i]
-		client := urlfetch.Client(c)
-		resp, err := client.Get(s)
-		if err != nil {
-			return nil, appError{"Could not fetch URL"}
+		var b []byte
+
+		// Get the item from the memcache
+		if item, err := memcache.Get(c, s); err == nil {
+			b = item.Value
+			c.Infof("In the cache %v", s)
+		} else {
+			client := urlfetch.Client(c)
+			resp, err := client.Get(s)
+			if err != nil {
+				return nil, appError{"Could not fetch URL"}
+			}
+			b = make([]byte, resp.ContentLength)
+			_, err = resp.Body.Read(b)
+			if err != nil {
+				return nil, appError{"Could not read image data"}
+			}
+
+			done := make(chan bool, 1)
+			go func() {
+				if resp.ContentLength > 100000 {
+					done <- true
+				} else {
+					item = &memcache.Item{
+						Key:   s,
+						Value: b,
+					}
+					if err := memcache.Set(c, item); err == memcache.ErrNotStored {
+						c.Infof("item with key %q already exists", item.Key)
+					} else if err != nil {
+						c.Errorf("error adding item: %s", item.Key)
+					}
+					done <- true
+				}
+			}()
+			select {
+			case <-done:
+				c.Infof("done")
+			case <-time.After(1000 * time.Millisecond):
+			}
 		}
-		reader := resp.Body
+		reader := bytes.NewReader(b)
 		im, _, err := image.Decode(reader)
 		if err == nil {
 			return im, nil
