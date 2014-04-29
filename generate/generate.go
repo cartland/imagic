@@ -22,8 +22,8 @@ import (
 	"net/http"
 	"strconv"
 
-  "github.com/mjibson/appstats"
 	"github.com/cartland/go/imagic"
+	"github.com/mjibson/appstats"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -76,14 +76,14 @@ func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	dmc := make(chan image.Image)
 
 	go func() {
-		bg, err := getImage("background", r)
+		bg, err := getImage(c, "background", r)
 		if err != nil {
 			bgc <- nil
 		}
 		bgc <- bg
 	}()
 	go func() {
-		dm, err := getImage("depth", r)
+		dm, err := getImage(c, "depth", r)
 		if err != nil {
 			dmc <- nil
 		}
@@ -93,12 +93,12 @@ func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	dm := <-dmc
 	bg := <-bgc
 
-  if dm == nil {
-    http.Error(w, "No depth map found", http.StatusNotFound)
-  }
-  if bg == nil {
-    http.Error(w, "No background image found", http.StatusNotFound)
-  }
+	if dm == nil {
+		http.Error(w, "No depth map found", http.StatusNotFound)
+	}
+	if bg == nil {
+		http.Error(w, "No background image found", http.StatusNotFound)
+	}
 
 	var config imagic.Config
 	width := dm.Bounds().Max.X - dm.Bounds().Min.X
@@ -107,23 +107,23 @@ func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	config = updateConfig(&config, r)
 
 	outputImage := imagic.Imagic(dm, bg, config)
-  err := png.Encode(w, outputImage)
+	err := png.Encode(w, outputImage)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getImage(name string, r *http.Request) (image.Image, error) {
-	img, err := parseFirstImage(name, r)
+func getImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
+	img, err := parseFirstImage(c, name, r)
 	if err != nil {
-		img, err := lookupImage(name, r)
+		img, err := lookupImage(c, name, r)
 		return img, err
 	}
 	return img, err
 }
 
 // Grab the first image from the multipart form that matches the supplied name.
-func parseFirstImage(name string, r *http.Request) (image.Image, error) {
+func parseFirstImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
 	err := r.ParseMultipartForm(10000000) // 10^7 bytes (10MB)  max payload
 	if err != nil {
 		return nil, err
@@ -152,7 +152,7 @@ func parseFirstImage(name string, r *http.Request) (image.Image, error) {
 	return im, nil
 }
 
-func lookupImage(name string, r *http.Request) (image.Image, error) {
+func lookupImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
 	err := r.ParseForm()
 	if err != nil {
 		return nil, err
@@ -161,7 +161,6 @@ func lookupImage(name string, r *http.Request) (image.Image, error) {
 	vs = r.Form[name]
 	for i := range vs {
 		s := vs[i]
-		c := appengine.NewContext(r)
 		client := urlfetch.Client(c)
 		resp, err := client.Get(s)
 		if err != nil {
