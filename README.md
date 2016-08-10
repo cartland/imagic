@@ -3,17 +3,14 @@ imagic
 
 "Image Magic" autostereogram generator.
 
-Usage:
-```import (
+Go import:
+```
+import (
     "github.com/cartland/imagic"
-  )
+)
 ```
 
 
-Hosted with Go App Engine runtime at imagic-golang.appspot.com.
-```/appengine
-```
+Go App Engine source in `/appengine`. Hosted at https://imagic-golang.appspot.com.
 
-Command line example usage included.
-``` /example
-```
+Command line usage included in `/example`.
