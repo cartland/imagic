@@ -22,7 +22,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/cartland/go/imagic"
+	"github.com/cartland/imagic"
 	"github.com/mjibson/appstats"
 	"image"
 	_ "image/gif"
