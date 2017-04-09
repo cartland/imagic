@@ -13,4 +13,4 @@ import (
 
 Go App Engine source in `/appengine`. Hosted at https://imagic-golang.appspot.com.
 
-Command line usage included in `/example`.
+Command line usage included in `/imagic`.
