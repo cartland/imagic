@@ -38,10 +38,10 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+    androidTestCompile("com.android.support.test.espresso:espresso-core:$rootProject.ext.espressoVersion", {
         exclude group: 'com.android.support', module: 'support-annotations'
     })
-    compile 'com.github.bumptech.glide:volley-integration:1.4.0'
+    compile "com.github.bumptech.glide:volley-integration:$rootProject.ext.volleyVersion"
     compile "com.github.bumptech.glide:glide:$rootProject.ext.glideVersion"
     compile "com.android.support:appcompat-v7:$rootProject.ext.androidSupportVersion"
     compile "com.android.support:design:$rootProject.ext.androidSupportVersion"
