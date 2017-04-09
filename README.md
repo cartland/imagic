@@ -17,6 +17,12 @@ Hosted Service
 
 Try it online at https://imagic-golang.appspot.com.
 
+Or try this curl request from a directory with Chefchaouen.jpg and borrodepth.png:
+
+```
+curl -F "background=@Chefchaouen.jpg" -F "depth=@borrodepth.png" https://imagic-golang.appspot.com/generate -o output.png
+```
+
 Source in `/appengine`.
 
 Command Line
