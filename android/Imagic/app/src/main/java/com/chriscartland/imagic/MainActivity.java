@@ -18,27 +18,39 @@
 package com.chriscartland.imagic;
 
 import android.content.res.TypedArray;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import com.android.volley.DefaultRetryPolicy;
+import com.android.volley.NetworkResponse;
+import com.android.volley.NoConnectionError;
+import com.android.volley.Response;
+import com.android.volley.TimeoutError;
+import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
-
-import java.util.ArrayList;
+import com.chriscartland.imagic.network.DataPart;
+import com.chriscartland.imagic.network.MultipartRequest;
+import com.chriscartland.imagic.network.VolleySingleton;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = MainActivity.class.getSimpleName();
     private static final String IMAGE_URL_STATE = "image_state";
     private static final String DEPTH_URL_STATE = "depth_state";
     private static final String BACKGROUND_URL_STATE = "background_state";
+    private static final int TIMEOUT_MS = 10000;
     private MainActivity mContext;
     private String mUrl;
 
@@ -67,15 +79,68 @@ public class MainActivity extends AppCompatActivity {
                 urlBuilder.addParam(getString(R.string.depth), depthUrl);
                 urlBuilder.addParam(getString(R.string.background), backgroundUrl);
                 mUrl = urlBuilder.build().toString();
-                updateImage();
+                processImages();
             }
         });
     }
 
+    /**
+     * Create image based on URLs.
+     */
     private void updateImage() {
         ImageView imageView = (ImageView) findViewById(R.id.output_image);
         Glide.with(mContext).load(mUrl)
                 .placeholder(getProgressBarIndeterminate()).into(imageView);
+    }
+
+    /**
+     * Creage image based on uploaded images.
+     */
+    private void processImages() {
+        // TODO(cartland): Move this work off the UI thread.
+
+        final ImageView imageView = (ImageView) findViewById(R.id.output_image);
+        Response.Listener<NetworkResponse> listener = new Response.Listener<NetworkResponse>() {
+            @Override
+            public void onResponse(NetworkResponse response) {
+                byte[] data = response.data;
+                Log.d(TAG, "Image processed. Displaying result.");
+                Bitmap bmp = BitmapFactory.decodeByteArray(data, 0, data.length);
+                imageView.setImageBitmap(bmp);
+            }
+        };
+        Response.ErrorListener errorListener = new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                NetworkResponse networkResponse = error.networkResponse;
+                String errorMessage = "Unknown error";
+                if (networkResponse == null) {
+                    if (error.getClass().equals(TimeoutError.class)) {
+                        errorMessage = "Request timeout";
+                    } else if (error.getClass().equals(NoConnectionError.class)) {
+                        errorMessage = "Failed to connect server";
+                    }
+                } else {
+                    String result = new String(networkResponse.data);
+                    Log.e(TAG, result);
+                }
+                error.printStackTrace();
+            }
+        };
+
+        MultipartRequest multipartRequest = new MultipartRequest(mUrl, errorListener, listener);
+        DataPart background = new DataPart("chefchaouen.jpg",
+                DataPart.getFileDataFromDrawable(getDrawable(R.drawable.chefchaouen)),
+                "image/jpeg");
+        multipartRequest.putDataPart("background", background);
+
+        DataPart depth = new DataPart("borrodepth.png",
+                DataPart.getFileDataFromDrawable(getDrawable(R.drawable.borrodepth)),
+                "image/jpeg");
+        multipartRequest.putDataPart("depth", depth);
+
+        multipartRequest.setRetryPolicy(new DefaultRetryPolicy(TIMEOUT_MS, 1, 1));
+        VolleySingleton.getInstance(getBaseContext()).addToRequestQueue(multipartRequest);
     }
 
     @Override
