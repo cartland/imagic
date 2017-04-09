@@ -1,7 +1,9 @@
-application: imagic-golang
-version: 5
 runtime: go
 api_version: go1
+instance_class: B4_1G
+basic_scaling:
+  max_instances: 1
+  idle_timeout: 10m
 
 handlers:
 - url: /.*
