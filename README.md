@@ -20,7 +20,9 @@ Try it online at https://imagic-golang.appspot.com.
 Or try this curl request from a directory with Chefchaouen.jpg and borrodepth.png:
 
 ```
-curl -F "background=@Chefchaouen.jpg" -F "depth=@borrodepth.png" https://imagic-golang.appspot.com/generate -o output.png
+curl -F "background=@Chefchaouen.jpg" -F "depth=@borrodepth.png" https://imagic-golang.appspot.com/generate -o file_output.png
+
+curl "https://imagic-golang.appspot.com/generate?background=http%3A%2F%2Fwww.chriscartland.com%2Fstatic%2FChefchaouen.jpg&depth=http%3A%2F%2Fwww.imsc.res.in%2F~kapil%2Fgeometry%2Fborr%2Fborrodepth.png" -o url_output.png
 ```
 
 Source in `/appengine`.
