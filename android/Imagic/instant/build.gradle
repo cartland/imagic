@@ -15,4 +15,8 @@
  *
  */
 
-include ':app', ':basefeature', ':instant'
+apply plugin: 'com.android.instantapp'
+
+dependencies {
+    implementation project(':basefeature')
+}
