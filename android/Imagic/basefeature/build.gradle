@@ -15,14 +15,15 @@
  *
  */
 
-apply plugin: 'com.android.application'
-apply plugin: 'com.github.triplet.play'
+apply plugin: 'com.android.feature'
 
 def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
 android {
+    baseFeature true
+
     signingConfigs {
         release {
             keyAlias keystoreProperties['keyAlias']
@@ -32,25 +33,16 @@ android {
         }
     }
 
-    playAccountConfigs {
-        defaultAccountConfig {
-            jsonFile = file('keys.json')
-        }
-    }
-
     compileSdkVersion project.COMPILE_SDK_VERSION
     buildToolsVersion project.BUILD_TOOLS_VERSION
 
     defaultConfig {
-        applicationId project.APP_ID
         minSdkVersion project.MIN_SDK_VERSION
         targetSdkVersion project.TARGET_SDK_VERSION
         versionCode project.MOBILE_VERSION_CODE
         versionName project.MOBILE_VERSION_NAME
 
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
-
-        playAccountConfig = playAccountConfigs.defaultAccountConfig
     }
     buildTypes {
         release {
@@ -66,5 +58,19 @@ android {
 }
 
 dependencies {
-    implementation project(':basefeature')
+    application project(':app')
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile "com.github.bumptech.glide:volley-integration:$project.VOLLEY_VERSION"
+    compile "com.github.bumptech.glide:glide:$project.GLIDE_VERSION"
+    compile "com.android.support:appcompat-v7:$project.SUPPORT_VERSION"
+    compile "com.android.support:design:$project.SUPPORT_VERSION"
+    compile "com.android.support:support-v4:$project.SUPPORT_VERSION"
+
+    androidTestCompile("com.android.support.test.espresso:espresso-core:$project.ESPRESSO_VERSION", {
+        exclude group: 'com.android.support', module: 'support-annotations'
+    })
+    androidTestCompile 'com.android.support.test:runner:1.0.1'
+    androidTestCompile 'com.android.support.test.espresso:espresso-core:3.0.1'
+    testCompile "junit:junit:$project.JUNIT_VERSION"
 }

@@ -15,4 +15,4 @@
  *
  */
 
-include ':app'
+include ':app', ':basefeature'
