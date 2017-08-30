@@ -21,6 +21,7 @@ import android.content.res.TypedArray;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
@@ -72,13 +73,13 @@ public class MainActivity extends AppCompatActivity {
                 String backgroundUrl =
                         ((EditText) findViewById(R.id.background_url)).getText().toString();
 
-                ImagicUrl.Builder urlBuilder = new ImagicUrl.Builder();
-                urlBuilder.setScheme(getString(R.string.scheme));
-                urlBuilder.setHost(getString(R.string.host));
-                urlBuilder.setPath(getString(R.string.path));
-                urlBuilder.addParam(getString(R.string.depth), depthUrl);
-                urlBuilder.addParam(getString(R.string.background), backgroundUrl);
-                mUrl = urlBuilder.build().toString();
+                mUrl = new Uri.Builder()
+                        .scheme(getString(R.string.scheme))
+                        .authority(getString(R.string.host))
+                        .path(getString(R.string.path))
+                        .appendQueryParameter(getString(R.string.depth), depthUrl)
+                        .appendQueryParameter(getString(R.string.background), backgroundUrl)
+                        .build().toString();
                 processImages();
             }
         });
