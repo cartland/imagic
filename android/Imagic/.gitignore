@@ -48,3 +48,6 @@ google-services.json
 
 # Mac
 .DS_Store
+
+# https://github.com/Triple-T/gradle-play-publisher
+keys.json
