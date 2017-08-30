@@ -16,8 +16,10 @@
 package handler
 
 import (
-	"appengine"
-	"appengine/urlfetch"
+	"golang.org/x/net/context"
+	"google.golang.org/appengine"
+	"google.golang.org/appengine/log"
+	"google.golang.org/appengine/urlfetch"
 	"html/template"
 	"net/http"
 	"strconv"
@@ -35,12 +37,13 @@ func init() {
 	http.Handle("/generate", appstats.NewHandler(generate))
 }
 
-func handler(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+func handler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
 	generateURL := "/generate"
 	w.Header().Set("Content-Type", "text/html")
 	err := rootTemplate.Execute(w, generateURL)
 	if err != nil {
-		c.Errorf("%v", err)
+		log.Errorf(c, "%v", err)
 	}
 }
 
@@ -70,7 +73,8 @@ Separation Max: <input type="textbox" name="separationMax" value=""><br>
 // "separationMax" int the maximum eye separation distance.
 //
 // returns a PNG image.
-func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
+func generate(ctx context.Context, w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
 	w.Header().Set("Content-Type", "image/png")
 	bgc := make(chan image.Image)
 	dmc := make(chan image.Image)
@@ -107,13 +111,16 @@ func generate(c appengine.Context, w http.ResponseWriter, r *http.Request) {
 	config = updateConfig(&config, r)
 
 	outputImage := imagic.Imagic(dm, bg, config)
+	if outputImage == nil {
+		panic("outputImage is nil")
+	}
 	err := png.Encode(w, outputImage)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func getImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
+func getImage(c context.Context, name string, r *http.Request) (image.Image, error) {
 	img, err := parseFirstImage(c, name, r)
 	if err != nil {
 		img, err := lookupImage(c, name, r)
@@ -123,7 +130,7 @@ func getImage(c appengine.Context, name string, r *http.Request) (image.Image, e
 }
 
 // Grab the first image from the multipart form that matches the supplied name.
-func parseFirstImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
+func parseFirstImage(c context.Context, name string, r *http.Request) (image.Image, error) {
 	err := r.ParseMultipartForm(10000000) // 10^7 bytes (10MB)  max payload
 	if err != nil {
 		return nil, err
@@ -152,7 +159,7 @@ func parseFirstImage(c appengine.Context, name string, r *http.Request) (image.I
 	return im, nil
 }
 
-func lookupImage(c appengine.Context, name string, r *http.Request) (image.Image, error) {
+func lookupImage(c context.Context, name string, r *http.Request) (image.Image, error) {
 	err := r.ParseForm()
 	if err != nil {
 		return nil, err
