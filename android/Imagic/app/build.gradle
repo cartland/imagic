@@ -18,7 +18,7 @@
 apply plugin: 'com.android.application'
 apply plugin: 'com.github.triplet.play'
 
-def keystorePropertiesFile = rootProject.file("keystore.properties")
+def keystorePropertiesFile = rootProject.file('keystore.properties')
 def keystoreProperties = new Properties()
 keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
@@ -48,7 +48,7 @@ android {
         versionCode project.MOBILE_VERSION_CODE
         versionName project.MOBILE_VERSION_NAME
 
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
 
         playAccountConfig = playAccountConfigs.defaultAccountConfig
     }
