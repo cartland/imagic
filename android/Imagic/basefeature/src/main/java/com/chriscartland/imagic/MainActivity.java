@@ -41,7 +41,6 @@ import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.chriscartland.imagic.network.DataPart;
 import com.chriscartland.imagic.network.MultipartRequest;
 import com.chriscartland.imagic.network.VolleySingleton;
