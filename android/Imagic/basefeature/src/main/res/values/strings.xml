@@ -18,7 +18,7 @@
 <resources>
     <string name="app_name">Imagic</string>
     <string name="action_settings">Settings</string>
-    <string name="scheme">https://</string>
+    <string name="scheme">https</string>
     <string name="host">imagic-golang.appspot.com</string>
     <string name="path">/generate</string>
     <string name="background">background</string>

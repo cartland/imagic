@@ -41,6 +41,7 @@ import com.android.volley.Response;
 import com.android.volley.TimeoutError;
 import com.android.volley.VolleyError;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.chriscartland.imagic.network.DataPart;
 import com.chriscartland.imagic.network.MultipartRequest;
 import com.chriscartland.imagic.network.VolleySingleton;
@@ -133,12 +134,12 @@ public class MainActivity extends AppCompatActivity {
         DataPart background = new DataPart("chefchaouen.jpg",
                 DataPart.getFileDataFromDrawable(getDrawable(R.drawable.chefchaouen)),
                 "image/jpeg");
-        multipartRequest.putDataPart("background", background);
+//        multipartRequest.putDataPart("background", background);
 
         DataPart depth = new DataPart("borrodepth.png",
                 DataPart.getFileDataFromDrawable(getDrawable(R.drawable.borrodepth)),
                 "image/jpeg");
-        multipartRequest.putDataPart("depth", depth);
+//        multipartRequest.putDataPart("depth", depth);
 
         multipartRequest.setRetryPolicy(new DefaultRetryPolicy(TIMEOUT_MS, 1, 1));
         VolleySingleton.getInstance(getBaseContext()).addToRequestQueue(multipartRequest);
