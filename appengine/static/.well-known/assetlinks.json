@@ -1,0 +1,9 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.chriscartland.imagic",
+    "sha256_cert_fingerprints":
+    ["F5:A8:E5:F9:20:9E:5F:90:3A:EF:97:AB:8A:E3:13:55:D2:BF:63:4B:40:0D:AC:E6:00:F0:63:F7:A3:E9:02:9E"]
+  }
+}]

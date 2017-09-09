@@ -5,7 +5,18 @@ basic_scaling:
   max_instances: 1
   idle_timeout: 10m
 
+skip_files:
+- ^(.*/)?#.*#$
+- ^(.*/)?.*~$
+- ^(.*/)?.*\.py[co]$
+- ^(.*/)?.*/RCS/.*$
+# Include files that being with period (.)
+# - ^(.*/)?\..*$
+
 handlers:
+- url: /.well-known
+  static_dir: static/.well-known
+
 - url: /.*
   script: _go_app
   secure: always
