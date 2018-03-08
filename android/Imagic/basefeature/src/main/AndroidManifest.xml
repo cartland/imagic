@@ -54,6 +54,9 @@
                     android:scheme="https"
                     android:host="imagic-golang.appspot.com" />
             </intent-filter>
+            <meta-data
+                android:name="default-url"
+                android:value="https://imagic-golang.appspot.com" />
         </activity>
     </application>
 </manifest>
