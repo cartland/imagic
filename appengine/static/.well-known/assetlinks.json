@@ -4,7 +4,6 @@
     "namespace": "android_app",
     "package_name": "com.chriscartland.imagic",
     "sha256_cert_fingerprints":
-    ["F5:A8:E5:F9:20:9E:5F:90:3A:EF:97:AB:8A:E3:13:55:D2:BF:63:4B:40:0D:AC:E6:00:F0:63:F7:A3:E9:02:9E",
-     "B1:0D:FF:CA:4D:E1:0F:4B:C4:24:F6:41:5F:2B:0C:48:06:F9:26:CF:95:4D:E4:BE:71:DF:58:80:78:D4:43:20"]
+    ["F5:A8:E5:F9:20:9E:5F:90:3A:EF:97:AB:8A:E3:13:55:D2:BF:63:4B:40:0D:AC:E6:00:F0:63:F7:A3:E9:02:9E"]
   }
 }]
