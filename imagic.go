@@ -18,6 +18,7 @@ package imagic
 import (
 	"image"
 	"image/color"
+  "math"
 )
 
 type Config struct {
@@ -26,18 +27,89 @@ type Config struct {
 	InvertDepth                  bool
 }
 
+type ColorRemainder struct {
+  R, G, B int32
+  A uint32
+}
+
+func (c ColorRemainder) RGBA() (r, g, b int32, a uint32) {
+  return c.R, c.G, c.B, c.A
+}
+
+func addColor(c color.Color, other ColorRemainder) ColorRemainder {
+  cr, cg, cb, ca := c.RGBA()
+  or, og, ob, _ := other.RGBA()
+  sum_r := int32(cr) + or
+  sum_g := int32(cg) + og
+  sum_b := int32(cb) + ob
+  return ColorRemainder{sum_r, sum_g, sum_b, ca}
+}
+
+func subtractColor(c ColorRemainder, other color.Color) ColorRemainder {
+  cr, cg, cb, _ := c.RGBA()
+  or, og, ob, oa := other.RGBA()
+  diff_r := int32(cr) - int32(or)
+  diff_g := int32(cg) - int32(og)
+  diff_b := int32(cb) - int32(ob)
+  return ColorRemainder{diff_r, diff_g, diff_b, oa}
+}
+
+func (c ColorRemainder) realColor() color.Color {
+  r := uint8(math.Max(0, math.Min(float64(c.A), float64(c.R))))
+  g := uint8(math.Max(0, math.Min(float64(c.A), float64(c.G))))
+  b := uint8(math.Max(0, math.Min(float64(c.A), float64(c.B))))
+  a := uint8(c.A)
+  return color.RGBA{r, g, b, a}
+}
+
+func ApplyPalette(input image.Image, palette color.Palette) image.Image {
+  cm := input.ColorModel()
+	result := newMutableImage(input, cm)
+	if result == nil {
+		return nil
+	}
+	bounds := input.Bounds()
+	min := bounds.Min
+	max := bounds.Max
+	for y := min.Y; y < max.Y; y++ {
+		r := applyPaletteToRow(input, palette, y)
+		result.imageRows[y] = r
+	}
+	return result
+}
+
+func applyPaletteToRow(input image.Image, palette color.Palette, y int) imageRow {
+	inputWidth := boundsWidth(input.Bounds())
+	row := imageRow{}
+	row.colors = make([]color.Color, inputWidth)
+  var realColor, closestColor color.Color
+  var leftoverColor ColorRemainder
+	for x := 0; x < inputWidth; x++ {
+    realColor = input.At(x, y)
+    adjustedColor := addColor(realColor, leftoverColor)
+
+    closestColor = palette.Convert(adjustedColor.realColor())
+    // Disable the color adjustment
+    // closestColor = palette.Convert(realColor)
+
+    leftoverColor = subtractColor(adjustedColor, closestColor)
+		row.colors[x] = closestColor
+	}
+	return row
+}
+
 /**
  * Given a depth map and background image, create an autostereogram.
  */
 func Imagic(dm, bg image.Image, config Config) image.Image {
-	bounds := dm.Bounds()
-	min := bounds.Min
-	max := bounds.Max
-	result := newMutableImage(dm, bg)
+  cm := bg.ColorModel()
+	result := newMutableImage(dm, cm)
 	if result == nil {
 		return nil
 	}
-
+	bounds := dm.Bounds()
+	min := bounds.Min
+	max := bounds.Max
 	for y := min.Y; y < max.Y; y++ {
 		r := magicInflateRow(dm, bg, config, y)
 		result.imageRows[y] = r
@@ -136,15 +208,13 @@ func sourceOffset(depth uint32, config Config) uint32 {
 	return offset
 }
 
-func newMutableImage(dm, bg image.Image) *mutableImage {
+func newMutableImage(dm image.Image, cm color.Model) *mutableImage {
 	if dm == nil {
 		return nil
 	}
-	if bg == nil {
+	if cm == nil {
 		return nil
 	}
-
-	cm := bg.ColorModel()
 	bounds := dm.Bounds()
 	var imageRows = make([]imageRow, bounds.Max.Y)
 	image := new(mutableImage)
