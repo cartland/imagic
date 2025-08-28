@@ -25,7 +25,7 @@ import (
 	"strconv"
 
 	"github.com/cartland/imagic"
-	"github.com/mjibson/appstats"
+	// "github.com/mjibson/appstats"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -33,8 +33,8 @@ import (
 )
 
 func init() {
-	http.Handle("/", appstats.NewHandler(handler))
-	http.Handle("/generate", appstats.NewHandler(generate))
+	// http.Handle("/", appstats.NewHandler(handler))
+	// http.Handle("/generate", appstats.NewHandler(generate))
 }
 
 func handler(ctx context.Context, w http.ResponseWriter, r *http.Request) {
