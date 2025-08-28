@@ -27,11 +27,11 @@ import (
 )
 
 var opts struct {
-	DepthMapFile   string `short:"d" long:"depth" default:"borrodepth.png" description:"depth:depth map image"`
-	BackgroundFile string `short:"b" long:"background" default:"Chefchaouen.jpg" description:"depth:background image texture"`
+	DepthMapFile   string `short:"d" long:"depth" default:"examples/inputs/depthmaps/borrodepth.png" description:"depth:depth map image"`
+	BackgroundFile string `short:"b" long:"background" default:"examples/inputs/backgrounds/Chefchaouen.jpg" description:"depth:background image texture"`
 	CrossEyed      bool   `short:"c" long:"crosseyed" description:"crosseyed:create image designed for cross-eyed viewing"`
 	InvertDepth    bool   `short:"i" long:"invertdepth" description:"invertdepth:invert depth map"`
-	OutputFile     string `short:"o" long:"output" default:"output.png" description:"output:output file name"`
+	OutputFile     string `short:"o" long:"output" default:"examples/outputs/output.png" description:"output:output file name"`
 }
 
 func main() {

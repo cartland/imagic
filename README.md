@@ -30,14 +30,19 @@ Source in `/appengine`.
 Command Line
 ============
 
-To run the command-line tool, use the following command from the project root:
+To install the command-line tool, use the following command:
 ```
-go run imagic/example.go -d imagic/borrodepth.png -b imagic/Chefchaouen.jpg -o imagic/output.png
+go install github.com/cartland/imagic/cmd/imagic@latest
+```
+
+Then, you can run the tool from anywhere:
+```
+imagic -d examples/inputs/depthmaps/borrodepth.png -b examples/inputs/backgrounds/Chefchaouen.jpg -o examples/outputs/output.png
 ```
 
 You can also use the optional `-c` flag for cross-eyed viewing and `-i` to invert the depth map.
 
-Source in `/imagic`.
+Source in `/cmd/imagic`.
 
 ![Output Autostereogram](imagic/output.png "Autostereogram")
 ![Input Depth Map](imagic/borrodepth.png "Depth Map")
